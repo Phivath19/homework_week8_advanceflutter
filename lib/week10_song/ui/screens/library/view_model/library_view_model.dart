@@ -10,7 +10,6 @@ import 'library_item_data.dart';
 class LibraryViewModel extends ChangeNotifier {
   final SongRepository songRepository;
   final ArtistRepository artistRepository;
-
   final PlayerState playerState;
 
   AsyncValue<List<LibraryItemData>> data = AsyncValue.loading();
@@ -21,8 +20,6 @@ class LibraryViewModel extends ChangeNotifier {
     required this.artistRepository,
   }) {
     playerState.addListener(notifyListeners);
-
-    // init
     _init();
   }
 
@@ -36,19 +33,18 @@ class LibraryViewModel extends ChangeNotifier {
     fetchSong();
   }
 
-  void fetchSong() async {
-    // 1- Loading state
+  void fetchSong({bool forceFetch = false}) async {
     data = AsyncValue.loading();
     notifyListeners();
 
     try {
-      // 1- Fetch songs
-      List<Song> songs = await songRepository.fetchSongs();
+      List<Song> songs = await songRepository.fetchSongs(
+        forceFetch: forceFetch,
+      );
+      List<Artist> artists = await artistRepository.fetchArtists(
+        forceFetch: forceFetch,
+      );
 
-      // 2- Fethc artist
-      List<Artist> artists = await artistRepository.fetchArtists();
-
-      // 3- Create the mapping artistid-> artist
       Map<String, Artist> mapArtist = {};
       for (Artist artist in artists) {
         mapArtist[artist.id] = artist;
@@ -63,7 +59,6 @@ class LibraryViewModel extends ChangeNotifier {
 
       this.data = AsyncValue.success(data);
     } catch (e) {
-      // 3- Fetch is unsucessfull
       data = AsyncValue.error(e);
     }
     notifyListeners();
@@ -72,7 +67,6 @@ class LibraryViewModel extends ChangeNotifier {
   void likeSong(Song song) async {
     try {
       Song updatedSong = await songRepository.likeSong(song.id, song.likes);
-
       if (data.value != null) {
         List<LibraryItemData> updatedList = data.value!.map((item) {
           if (item.song.id == updatedSong.id) {
@@ -80,19 +74,16 @@ class LibraryViewModel extends ChangeNotifier {
           }
           return item;
         }).toList();
-
         data = AsyncValue.success(updatedList);
         notifyListeners();
       }
     } catch (e) {
-      // Keep existing data but notify error
       data = AsyncValue.error(e);
       notifyListeners();
     }
   }
 
   bool isSongPlaying(Song song) => playerState.currentSong == song;
-
   void start(Song song) => playerState.start(song);
   void stop(Song song) => playerState.stop();
 }

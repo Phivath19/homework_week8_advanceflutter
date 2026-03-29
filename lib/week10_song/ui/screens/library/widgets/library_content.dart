@@ -28,26 +28,31 @@ class LibraryContent extends StatelessWidget {
         );
       case AsyncValueState.success:
         List<LibraryItemData> data = asyncValue.data!;
-        content = ListView.builder(
-          itemCount: data.length,
-          itemBuilder: (context, index) => LibraryItemTile(
-            data: data[index],
-            isPlaying: mv.isSongPlaying(data[index].song),
-            onTap: () {
-              mv.start(data[index].song);
-            },
-            onLike: () {
-              try {
-                mv.likeSong(data[index].song);
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to like song. Try again!'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
+        content = RefreshIndicator(
+          onRefresh: () async {
+            mv.fetchSong(forceFetch: true);
+          },
+          child: ListView.builder(
+            itemCount: data.length,
+            itemBuilder: (context, index) => LibraryItemTile(
+              data: data[index],
+              isPlaying: mv.isSongPlaying(data[index].song),
+              onTap: () {
+                mv.start(data[index].song);
+              },
+              onLike: () {
+                try {
+                  mv.likeSong(data[index].song);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to like song. Try again!'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
           ),
         );
     }
