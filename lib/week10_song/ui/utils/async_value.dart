@@ -14,4 +14,6 @@ class AsyncValue<T> {
 
   factory AsyncValue.error(Object error) =>
       AsyncValue._(error: error, state: AsyncValueState.error);
+
+  get value => null;
 }

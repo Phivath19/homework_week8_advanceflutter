@@ -11,20 +11,21 @@ class LibraryContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1- Read the globbal song repository
     LibraryViewModel mv = context.watch<LibraryViewModel>();
-
     AsyncValue<List<LibraryItemData>> asyncValue = mv.data;
 
     Widget content;
     switch (asyncValue.state) {
-      
       case AsyncValueState.loading:
         content = Center(child: CircularProgressIndicator());
         break;
       case AsyncValueState.error:
-        content = Center(child: Text('error = ${asyncValue.error!}', style: TextStyle(color: Colors.red),));
-
+        content = Center(
+          child: Text(
+            'error = ${asyncValue.error!}',
+            style: TextStyle(color: Colors.red),
+          ),
+        );
       case AsyncValueState.success:
         List<LibraryItemData> data = asyncValue.data!;
         content = ListView.builder(
@@ -34,6 +35,18 @@ class LibraryContent extends StatelessWidget {
             isPlaying: mv.isSongPlaying(data[index].song),
             onTap: () {
               mv.start(data[index].song);
+            },
+            onLike: () {
+              try {
+                mv.likeSong(data[index].song);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to like song. Try again!'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
           ),
         );
@@ -47,7 +60,6 @@ class LibraryContent extends StatelessWidget {
           SizedBox(height: 16),
           Text("Library", style: AppTextStyles.heading),
           SizedBox(height: 50),
-
           Expanded(child: content),
         ],
       ),
